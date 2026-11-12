@@ -1,6 +1,7 @@
 import './cliente/cliente.js';
 import './cliente/qr.js';
 import './admin/admin.js';
+import QRCode from 'qrcode';
 
 const body = document.body;
 const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
@@ -82,7 +83,7 @@ if (tablesModal) {
                 throw new Error(data.error || 'No fue posible consultar la mesa.');
             }
 
-            renderTableDetails(data);
+            await renderTableDetails(data);
 
         } catch (error) {
             modalError.textContent = error.message;
@@ -91,11 +92,16 @@ if (tablesModal) {
         }
     };
 
-    const renderTableDetails = (data) => {
+    const renderTableDetails = async (data) => {
         const mesa = data.mesa;
         const sesion = data.sesion;
         const cliente = data.cliente;
         const pedidos = data.pedidos || [];
+        const codigoQr = mesa.codigo_qr || mesa.id;
+        const urlQr = new URL(
+            `/mesa/${encodeURIComponent(codigoQr)}`,
+            window.location.origin
+        ).toString();
 
         const estado = mesa.estado || 'libre';
 
@@ -161,6 +167,22 @@ if (tablesModal) {
                 </span>
             </div>
 
+            <div class="modal-section modal-qr-section">
+                <h3>QR de acceso a la mesa</h3>
+                <div class="modal-qr-card" data-qr-print-area>
+                    <img data-table-qr-image alt="Código QR para ${escapeModalText(mesa.nombre)}">
+                    <div class="modal-qr-details">
+                        <strong>${escapeModalText(mesa.nombre)}</strong>
+                        <p>Escanea para abrir esta mesa, iniciar sesión y solicitar acceso.</p>
+                        <code>${escapeModalText(urlQr)}</code>
+                    </div>
+                    <div class="modal-qr-actions">
+                        <button type="button" data-table-qr-print>Imprimir QR</button>
+                        <a href="${escapeModalText(urlQr)}" target="_blank" rel="noopener">Abrir enlace</a>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-section">
                 <h3>Información de la sesión</h3>
                 ${sesion ? `
@@ -199,6 +221,31 @@ if (tablesModal) {
                 </div>
             ` : ''}
         `;
+
+        const qrImage = modalContent.querySelector('[data-table-qr-image]');
+
+        try {
+            qrImage.src = await QRCode.toDataURL(urlQr, {
+                width: 256,
+                margin: 2,
+                errorCorrectionLevel: 'M',
+                color: {
+                    dark: '#241a1d',
+                    light: '#ffffff'
+                }
+            });
+        } catch (error) {
+            console.error('No se pudo generar el QR de la mesa:', error);
+            modalError.textContent = 'No se pudo generar el código QR de esta mesa.';
+        }
+
+        modalContent.querySelector('[data-table-qr-print]')?.addEventListener('click', () => {
+            document.body.classList.add('print-table-qr');
+            window.addEventListener('afterprint', () => {
+                document.body.classList.remove('print-table-qr');
+            }, { once: true });
+            window.print();
+        });
     };
 
     const formatMoney = (value) => {

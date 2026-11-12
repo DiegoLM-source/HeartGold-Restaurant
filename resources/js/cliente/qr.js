@@ -17,6 +17,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let scanning = false;
 
+    function obtenerUrlMesa(contenido) {
+        try {
+            const url = new URL(contenido.trim(), window.location.origin);
+
+            if (url.origin !== window.location.origin) {
+                return null;
+            }
+
+            const esQrMesaPermanente = /^\/mesa\/[0-9a-f-]{36}\/?$/i.test(
+                url.pathname
+            );
+
+            return esQrMesaPermanente ? url.toString() : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
     function obtenerToken(contenido) {
         const valor = contenido.trim();
 
@@ -73,6 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 },
                 async (decodedText) => {
+
+                    const urlMesa = obtenerUrlMesa(decodedText);
+
+                    if (urlMesa) {
+                        message.textContent = 'Código de mesa identificado. Abriendo…';
+                        await detenerEscaner();
+                        window.location.assign(urlMesa);
+                        return;
+                    }
 
                     const token = obtenerToken(decodedText);
 

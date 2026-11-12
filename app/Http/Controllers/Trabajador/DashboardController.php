@@ -1616,6 +1616,22 @@ class DashboardController extends Controller
 
             $datosMesa = $mesas[0];
 
+            // El QR persistente puede no estar disponible en instalaciones
+            // antiguas; en ese caso el UUID de la mesa sirve como código.
+            $respuestaCodigoQr = $consultar('mesas', [
+                'id' => 'eq.' . $mesa,
+                'select' => 'codigo_qr',
+                'limit' => '1',
+            ]);
+
+            $codigoQr = $respuestaCodigoQr->successful()
+                ? (($respuestaCodigoQr->json() ?? [])[0]['codigo_qr'] ?? null)
+                : null;
+
+            $datosMesa['codigo_qr'] = is_string($codigoQr) && Str::isUuid($codigoQr)
+                ? $codigoQr
+                : $datosMesa['id'];
+
             $resultado = [
                 'mesa' => $datosMesa,
                 'sesion' => null,
