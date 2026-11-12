@@ -41,4 +41,4 @@
     </div>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.trabajador', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\restaurante-laravel\restaurante-trabajador-base\resources\views/trabajador/dashboard.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.trabajador', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\restaurante-laravel\restaurante\resources\views/trabajador/dashboard.blade.php ENDPATH**/ ?>

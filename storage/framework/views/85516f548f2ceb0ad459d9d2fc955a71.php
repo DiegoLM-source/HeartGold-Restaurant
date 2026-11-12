@@ -62,4 +62,4 @@
     </main>
 
 </body>
-</html><?php /**PATH C:\restaurante-laravel\restaurante-trabajador-base\resources\views/auth/login.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\restaurante-laravel\restaurante\resources\views/auth/login.blade.php ENDPATH**/ ?>

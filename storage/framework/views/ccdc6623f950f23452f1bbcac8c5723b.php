@@ -91,4 +91,4 @@ unset($__errorArgs, $__bag); ?>
 
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.cliente', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\restaurante-laravel\restaurante-trabajador-base\resources\views/cliente/mesa/escanear.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.cliente', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\restaurante-laravel\restaurante\resources\views/cliente/mesa/escanear.blade.php ENDPATH**/ ?>
