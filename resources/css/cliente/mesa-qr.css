@@ -1,0 +1,247 @@
+
+.mesa-qr-page {
+    min-height: 100vh;
+    margin: 0;
+    background: #FFFBC7;
+    color: #34242a;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.mesa-qr-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 16px;
+}
+
+.mesa-qr-card {
+    width: 100%;
+    max-width: 460px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #eee6dc;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(75, 35, 43, 0.09);
+}
+
+.mesa-qr-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    padding: 25px;
+    color: #641D32;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    border-bottom: 1px solid #f0e9e3;
+}
+
+.mesa-qr-brand-icon {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: #641D32;
+    color: #ffffff;
+    font-size: 20px;
+    letter-spacing: 0;
+}
+
+.mesa-qr-content {
+    padding: 35px 30px;
+}
+
+.mesa-qr-label {
+    color: #9b6878;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.mesa-qr-content h1 {
+    margin: 10px 0;
+    color: #641D32;
+    font-size: 32px;
+}
+
+.mesa-qr-description {
+    margin: 0;
+    color: #766b6e;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.mesa-qr-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 25px 0;
+}
+
+.mesa-qr-info > div {
+    padding: 16px;
+    background: #fffaf5;
+    border: 1px solid #f0e7df;
+    border-radius: 12px;
+}
+
+.mesa-qr-info-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #8a7b7d;
+    font-size: 12px;
+}
+
+.mesa-qr-info strong {
+    color: #641D32;
+    font-size: 15px;
+}
+
+.mesa-qr-button {
+    width: 100%;
+    min-height: 49px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 11px;
+    background: #641D32;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.mesa-qr-button:hover {
+    background: #812a45;
+    transform: translateY(-1px);
+}
+
+.mesa-qr-auth {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.mesa-qr-auth h2 {
+    color: #641D32;
+    font-size: 19px;
+}
+
+.mesa-qr-auth p {
+    margin-bottom: 20px;
+    color: #766b6e;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.mesa-qr-login-link {
+    display: block;
+    margin-top: 19px;
+    color: #641D32;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.mesa-qr-login-link:hover {
+    text-decoration: underline;
+}
+
+.mesa-qr-alert {
+    margin: 18px 0;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mesa-qr-alert-error {
+    background: #fff0f0;
+    border: 1px solid #f2cccc;
+    color: #a12c36;
+}
+
+.mesa-qr-alert-success {
+    background: #edf8ef;
+    border: 1px solid #cce8d0;
+    color: #28643a;
+}
+
+.mesa-qr-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.mesa-qr-status.pending {
+    background: #fff8e6;
+    color: #8b6417;
+}
+
+.mesa-qr-status.accepted {
+    background: #edf8ef;
+    color: #28643a;
+}
+
+.mesa-qr-status.rejected {
+    background: #fff0f0;
+    color: #a12c36;
+}
+
+.mesa-qr-status-dot {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 10px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.mesa-qr-status strong {
+    font-size: 14px;
+}
+
+.mesa-qr-status p {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.mesa-qr-footer {
+    padding: 18px;
+    border-top: 1px solid #f0e9e3;
+    color: #9b8d8e;
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    .mesa-qr-container {
+        padding: 15px;
+    }
+
+    .mesa-qr-content {
+        padding: 27px 21px;
+    }
+
+    .mesa-qr-content h1 {
+        font-size: 27px;
+    }
+
+    .mesa-qr-info {
+        gap: 8px;
+    }
+
+    .mesa-qr-info > div {
+        padding: 12px;
+    }
+}
