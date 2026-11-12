@@ -9,15 +9,67 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Carbon\CarbonImmutable;
 
 class DashboardController extends Controller
 {
     public function index(): View
     {
-        return view('trabajador.dashboard');
+        $estadisticas = [
+            'mesas_libres' => null,
+            'mesas_ocupadas' => null,
+            'pedidos_pendientes' => null,
+            'reservas_pendientes' => null,
+        ];
+        $error = null;
+        $token = session('supabase_access_token');
+        $url = rtrim((string) config('services.supabase.url'), '/');
+        $key = config('services.supabase.key');
+
+        if (!$token || !$url || !$key) {
+            $error = 'No se pudo validar la sesión con Supabase. Cierra sesión e inicia nuevamente.';
+        } else {
+            try {
+                $consultas = [
+                    'mesas_libres' => ['mesas', ['select' => 'id', 'activa' => 'eq.true', 'estado' => 'eq.libre']],
+                    'mesas_ocupadas' => ['mesas', ['select' => 'id', 'activa' => 'eq.true', 'estado' => 'eq.ocupada']],
+                    'pedidos_pendientes' => ['pedidos', ['select' => 'id', 'estado' => 'eq.pendiente']],
+                    'reservas_pendientes' => ['reservas', ['select' => 'id', 'estado' => 'eq.pendiente']],
+                ];
+                foreach ($consultas as $indicador => [$tabla, $filtros]) {
+                    $respuesta = Http::acceptJson()->withToken($token)
+                        ->withHeaders([
+                            'apikey' => $key,
+                            'Prefer' => 'count=exact',
+                            'Range' => '0-0',
+                        ])->connectTimeout(5)->timeout(15)
+                        ->get($url . '/rest/v1/' . $tabla, $filtros);
+                    if (!$respuesta->successful()) {
+                        logger()->error('Error consultando indicadores del trabajador', [
+                            'indicador' => $indicador,
+                            'tabla' => $tabla,
+                            'status' => $respuesta->status(),
+                        ]);
+                        $error = 'No se pudieron consultar todos los indicadores del restaurante.';
+                        break;
+                    }
+                    $rango = $respuesta->header('Content-Range');
+                    if (!$rango || !preg_match('~/([0-9]+|\*)$~', $rango, $coincidencia) || $coincidencia[1] === '*') {
+                        $error = 'Supabase no devolvió el conteo de registros para el panel.';
+                        break;
+                    }
+                    $estadisticas[$indicador] = (int) $coincidencia[1];
+                }
+            } catch (ConnectionException $e) {
+                report($e);
+                $error = 'No fue posible conectar con Supabase. Inténtalo nuevamente.';
+            }
+        }
+
+        return view('trabajador.dashboard', compact('estadisticas', 'error'));
     }
 
-    public function seccion(string $seccion): View
+    public function seccion(Request $request, string $seccion): View
     {
         $secciones = [
             'mesas' => [
@@ -64,10 +116,453 @@ class DashboardController extends Controller
             return $this->mostrarInventario();
         }
 
+        $periodo = $this->normalizarPeriodo($request->query('periodo'));
+
+        if ($seccion === 'ventas') {
+            return $this->mostrarVentas($periodo);
+        }
+
+        if ($seccion === 'historial') {
+            return $this->mostrarHistorial($periodo);
+        }
+
         return view('trabajador.seccion', [
             'seccionActual' => $seccion,
             'seccion' => $secciones[$seccion],
         ]);
+    }
+
+    private function normalizarPeriodo(?string $periodo): string
+    {
+        return in_array($periodo, ['dia', 'semana', 'mes', 'tres_meses'], true)
+            ? $periodo
+            : 'mes';
+    }
+
+    private function limitesPeriodo(string $periodo): array
+    {
+        $ahora = CarbonImmutable::now('America/Bogota');
+
+        return match ($periodo) {
+            'dia' => [$ahora->startOfDay(), $ahora->startOfDay()->addDay()],
+            'semana' => [$ahora->startOfWeek(), $ahora->startOfWeek()->addWeek()],
+            'tres_meses' => [$ahora->startOfMonth()->subMonths(2), $ahora->startOfMonth()->addMonth()],
+            default => [$ahora->startOfMonth(), $ahora->startOfMonth()->addMonth()],
+        };
+    }
+
+    private function consultarSupabase(string $tabla, array $filtros)
+    {
+        $request = Http::acceptJson()
+            ->withToken(session('supabase_access_token'))
+            ->withHeaders(['apikey' => config('services.supabase.key')])
+            ->connectTimeout(5)
+            ->timeout(15);
+        $endpoint = rtrim((string) config('services.supabase.url'), '/') . '/rest/v1/' . $tabla;
+        $respuesta = $request->get($endpoint, $filtros);
+
+        if ($respuesta->status() === 401 && $this->renovarTokenSupabase()) {
+            return Http::acceptJson()
+                ->withToken(session('supabase_access_token'))
+                ->withHeaders(['apikey' => config('services.supabase.key')])
+                ->connectTimeout(5)
+                ->timeout(15)
+                ->get($endpoint, $filtros);
+        }
+
+        return $respuesta;
+    }
+
+    private function ejecutarRpc(string $funcion, array $datos)
+    {
+        $url = rtrim((string) config('services.supabase.url'), '/');
+        $key = config('services.supabase.key');
+        $enviar = fn () => Http::acceptJson()
+            ->withToken(session('supabase_access_token'))
+            ->withHeaders(['apikey' => $key])
+            ->connectTimeout(5)
+            ->timeout(15)
+            ->post($url . '/rest/v1/rpc/' . $funcion, $datos);
+
+        $respuesta = $enviar();
+        if ($respuesta->status() === 401 && $this->renovarTokenSupabase()) {
+            $respuesta = $enviar();
+        }
+
+        return $respuesta;
+    }
+
+    private function mostrarVentas(string $periodo): View
+    {
+        [$inicio, $fin] = $this->limitesPeriodo($periodo);
+        $pedidos = [];
+        $pedidosSinVenta = [];
+        $ventas = [];
+        $metodosPago = [];
+        $sesionesActivas = [];
+        $error = null;
+
+        if (!session('supabase_access_token') || !config('services.supabase.url') || !config('services.supabase.key')) {
+            $error = 'No se pudo validar la sesión con Supabase. Cierra sesión e inicia nuevamente.';
+        } else {
+            try {
+                $respuesta = $this->consultarSupabase('pedidos', [
+                    'select' => 'id,cliente_id,mesa_id,estado,subtotal,total,creado_en',
+                    'estado' => 'eq.entregado',
+                    'creado_en' => 'gte.' . $inicio->toIso8601String(),
+                    'and' => '(creado_en.lt.' . $fin->toIso8601String() . ')',
+                    'order' => 'creado_en.desc',
+                    'limit' => '500',
+                ]);
+
+                if (!$respuesta->successful()) {
+                    logger()->error('Error consultando pedidos entregados para ventas', ['status' => $respuesta->status()]);
+                    $error = 'No se pudieron consultar los pedidos entregados para este periodo.';
+                } else {
+                    $pedidos = $respuesta->json() ?? [];
+                    $pedidoIds = array_values(array_filter(array_column($pedidos, 'id')));
+                    $ventaPorPedido = [];
+                    $ventaIds = [];
+                    $pagosPorVenta = [];
+                    $metodos = [];
+
+                    if ($pedidoIds) {
+                        $respuestaVentas = $this->consultarSupabase('ventas', [
+                            'select' => 'id,pedido_id,trabajador_id,subtotal,total,estado',
+                            'pedido_id' => 'in.(' . implode(',', $pedidoIds) . ')',
+                            'order' => 'id.desc',
+                            'limit' => '500',
+                        ]);
+                        if (!$respuestaVentas->successful()) {
+                            logger()->error('Error consultando ventas del periodo', ['status' => $respuestaVentas->status()]);
+                            $error = 'No se pudieron consultar las ventas registradas.';
+                        } else {
+                            $ventas = $respuestaVentas->json() ?? [];
+                            foreach ($ventas as $venta) {
+                                $ventaPorPedido[$venta['pedido_id']] = $venta;
+                                $ventaIds[] = $venta['id'];
+                            }
+                            $pedidosSinVenta = array_values(array_filter(
+                                $pedidos,
+                                fn ($pedido) => !isset($ventaPorPedido[$pedido['id']])
+                            ));
+                        }
+
+                        if ($ventaIds) {
+                            $respuestaPagos = $this->consultarSupabase('pagos', [
+                                'select' => 'id,venta_id,metodo_pago_id,monto,referencia,estado,registrado_por,creado_en',
+                                'venta_id' => 'in.(' . implode(',', $ventaIds) . ')',
+                                'order' => 'creado_en.desc',
+                                'limit' => '1000',
+                            ]);
+                            if ($respuestaPagos->successful()) {
+                                foreach ($respuestaPagos->json() ?? [] as $pago) {
+                                    $pagosPorVenta[$pago['venta_id']][] = $pago;
+                                }
+                                $metodoIds = array_values(array_unique(array_filter(array_column($respuestaPagos->json() ?? [], 'metodo_pago_id'))));
+                                if ($metodoIds) {
+                                    $respuestaMetodos = $this->consultarSupabase('metodos_pago', [
+                                        'select' => 'id,nombre,activo',
+                                        'id' => 'in.(' . implode(',', $metodoIds) . ')',
+                                    ]);
+                                    if ($respuestaMetodos->successful()) {
+                                        foreach ($respuestaMetodos->json() ?? [] as $metodo) $metodos[$metodo['id']] = $metodo['nombre'];
+                                    }
+                                }
+                            } else {
+                                logger()->error('Error consultando pagos del periodo', ['status' => $respuestaPagos->status()]);
+                                $error = 'Se cargaron las ventas, pero no fue posible consultar sus pagos.';
+                            }
+                        }
+                    }
+
+                    $mesaIds = array_values(array_unique(array_filter(array_column($pedidos, 'mesa_id'))));
+                    $clienteIds = array_values(array_unique(array_filter(array_column($pedidos, 'cliente_id'))));
+                    $mesas = [];
+                    $clientes = [];
+
+                    if ($mesaIds) {
+                        $mesasRespuesta = $this->consultarSupabase('mesas', [
+                            'select' => 'id,nombre,zona',
+                            'id' => 'in.(' . implode(',', $mesaIds) . ')',
+                        ]);
+                        if ($mesasRespuesta->successful()) {
+                            foreach ($mesasRespuesta->json() ?? [] as $mesa) $mesas[$mesa['id']] = $mesa;
+                        }
+                    }
+                    if ($clienteIds) {
+                        $clientesRespuesta = $this->consultarSupabase('profiles', [
+                            'select' => 'id,full_name',
+                            'id' => 'in.(' . implode(',', $clienteIds) . ')',
+                        ]);
+                        if ($clientesRespuesta->successful()) {
+                            foreach ($clientesRespuesta->json() ?? [] as $cliente) $clientes[$cliente['id']] = $cliente;
+                        }
+                    }
+                    foreach ($pedidos as &$pedido) {
+                        $pedido['mesa'] = $mesas[$pedido['mesa_id'] ?? ''] ?? null;
+                        $pedido['cliente'] = $clientes[$pedido['cliente_id'] ?? ''] ?? null;
+                        $pedido['venta'] = $ventaPorPedido[$pedido['id']] ?? null;
+                        if ($pedido['venta']) {
+                            $ventaId = $pedido['venta']['id'];
+                            $pedido['venta']['pagos'] = $pagosPorVenta[$ventaId] ?? [];
+                            $pedido['venta']['total_pagado'] = array_sum(array_map(
+                                fn ($pago) => ($pago['estado'] ?? null) === 'pagado' ? (int) $pago['monto'] : 0,
+                                $pedido['venta']['pagos']
+                            ));
+                            $pedido['venta']['saldo'] = max(0, (int) $pedido['venta']['total'] - $pedido['venta']['total_pagado']);
+                            foreach ($pedido['venta']['pagos'] as &$pago) {
+                                $pago['nombre_metodo'] = $metodos[$pago['metodo_pago_id']] ?? 'Método no disponible';
+                            }
+                            unset($pago);
+                        }
+                    }
+                    unset($pedido);
+                }
+
+                $respuestaMetodosActivos = $this->consultarSupabase('metodos_pago', [
+                    'select' => 'id,nombre,descripcion,activo',
+                    'activo' => 'eq.true',
+                    'order' => 'nombre.asc',
+                ]);
+                if ($respuestaMetodosActivos->successful()) {
+                    $metodosPago = $respuestaMetodosActivos->json() ?? [];
+                } else {
+                    logger()->warning('No se pudieron consultar métodos de pago activos', ['status' => $respuestaMetodosActivos->status()]);
+                    $error = 'No se pudieron consultar los métodos de pago disponibles.';
+                }
+
+                $respuestaSesiones = $this->consultarSupabase('sesiones', [
+                    'select' => 'id,mesa_id,cliente_id,iniciada_en,activa',
+                    'activa' => 'eq.true',
+                    'order' => 'iniciada_en.asc',
+                    'limit' => '100',
+                ]);
+                if ($respuestaSesiones->successful()) {
+                    $sesionesActivas = $respuestaSesiones->json() ?? [];
+                    $mesaIds = array_values(array_unique(array_filter(array_column($sesionesActivas, 'mesa_id'))));
+                    if ($mesaIds) {
+                        $respuestaMesasActivas = $this->consultarSupabase('mesas', [
+                            'select' => 'id,nombre,zona',
+                            'id' => 'in.(' . implode(',', $mesaIds) . ')',
+                        ]);
+                        $mesasActivas = [];
+                        if ($respuestaMesasActivas->successful()) {
+                            foreach ($respuestaMesasActivas->json() ?? [] as $mesa) $mesasActivas[$mesa['id']] = $mesa;
+                        }
+                        foreach ($sesionesActivas as &$sesion) $sesion['mesa'] = $mesasActivas[$sesion['mesa_id']] ?? null;
+                        unset($sesion);
+                    }
+                } else {
+                    logger()->warning('No se pudieron consultar sesiones abiertas para el cierre', ['status' => $respuestaSesiones->status()]);
+                }
+            } catch (ConnectionException $e) {
+                report($e);
+                $error = 'No fue posible conectar con Supabase. Inténtalo nuevamente.';
+            }
+        }
+
+        $totalVentas = array_sum(array_map(fn ($venta) => ($venta['estado'] ?? null) !== 'anulado' ? (int) $venta['total'] : 0, $ventas));
+        $totalPagado = array_sum(array_map(
+            fn ($pedido) => $pedido['venta']['total_pagado'] ?? 0,
+            $pedidos
+        ));
+
+        return view('trabajador.ventas', compact('pedidos', 'pedidosSinVenta', 'ventas', 'sesionesActivas', 'metodosPago', 'error', 'periodo', 'totalVentas', 'totalPagado', 'inicio', 'fin'));
+    }
+
+    public function registrarVenta(Request $request)
+    {
+        $datos = $request->validate(['pedido_id' => ['required', 'uuid']]);
+        $respuesta = $this->ejecutarRpc('registrar_venta', [
+            'p_pedido_id' => $datos['pedido_id'],
+        ]);
+
+        if (!$respuesta->successful()) {
+            logger()->warning('RPC registrar_venta rechazó la operación', ['status' => $respuesta->status()]);
+            return back()->with('error', $this->mensajeErrorRpc($respuesta, 'No se pudo registrar la venta. Comprueba que el pedido esté entregado y no tenga una venta previa.'));
+        }
+
+        return back()->with('success', 'La venta se registró correctamente.');
+    }
+
+    public function registrarPago(Request $request, string $venta)
+    {
+        abort_unless(Str::isUuid($venta), 404);
+        $datos = $request->validate([
+            'metodo_pago_id' => ['required', 'uuid'],
+            'monto' => ['required', 'integer', 'min:1'],
+            'referencia' => ['nullable', 'string', 'max:255'],
+        ]);
+        $respuesta = $this->ejecutarRpc('registrar_pago', [
+            'p_venta_id' => $venta,
+            'p_metodo_pago_id' => $datos['metodo_pago_id'],
+            'p_monto' => $datos['monto'],
+            'p_referencia' => $datos['referencia'] ?? null,
+        ]);
+
+        if (!$respuesta->successful()) {
+            logger()->warning('RPC registrar_pago rechazó la operación', ['status' => $respuesta->status(), 'venta_id' => $venta]);
+            return back()->with('error', $this->mensajeErrorRpc($respuesta, 'No se pudo registrar el pago. Verifica el saldo pendiente y el método elegido.'));
+        }
+
+        return back()->with('success', 'El pago se registró correctamente.');
+    }
+
+    public function cerrarSesion(string $sesion)
+    {
+        abort_unless(Str::isUuid($sesion), 404);
+        $respuesta = $this->ejecutarRpc('cerrar_sesion', [
+            'p_sesion_id' => $sesion,
+        ]);
+
+        if (!$respuesta->successful()) {
+            logger()->warning('RPC cerrar_sesion rechazó la operación', ['status' => $respuesta->status(), 'sesion_id' => $sesion]);
+            return back()->with('error', $this->mensajeErrorRpc($respuesta, 'No se pudo cerrar la sesión. Revisa que todos los pedidos, ventas y pagos estén finalizados.'));
+        }
+
+        return back()->with('success', 'La sesión se cerró correctamente.');
+    }
+
+    private function mensajeErrorRpc($respuesta, string $alternativo): string
+    {
+        $mensaje = $respuesta->json('message') ?? $respuesta->json('msg');
+        if (!is_string($mensaje) || trim($mensaje) === '' || strlen($mensaje) > 240) {
+            return $alternativo;
+        }
+
+        return $mensaje;
+    }
+
+    private function mostrarHistorial(string $periodo): View
+    {
+        [$inicio, $fin] = $this->limitesPeriodo($periodo);
+        $eventos = [];
+        $error = null;
+
+        if (!session('supabase_access_token') || !config('services.supabase.url') || !config('services.supabase.key')) {
+            $error = 'No se pudo validar la sesión con Supabase. Cierra sesión e inicia nuevamente.';
+        } else {
+            $consultas = [
+                ['pedidos', 'creado_en', 'id,estado,total,creado_en'],
+                ['reservas', 'creado_en', 'id,estado,personas,creado_en'],
+                ['movimientos_inventario', 'creado_en', 'id,ingrediente_id,tipo,cantidad,motivo,creado_en'],
+                ['sesiones', 'iniciada_en', 'id,mesa_id,cliente_id,iniciada_en,activa'],
+            ];
+            $pedidoFechaPorId = [];
+            try {
+                foreach ($consultas as [$tabla, $columnaFecha, $select]) {
+                    $respuesta = $this->consultarSupabase($tabla, [
+                        'select' => $select,
+                        $columnaFecha => 'gte.' . $inicio->toIso8601String(),
+                        'and' => '(' . $columnaFecha . '.lt.' . $fin->toIso8601String() . ')',
+                        'order' => $columnaFecha . '.desc',
+                        'limit' => '250',
+                    ]);
+                    if (!$respuesta->successful()) {
+                        logger()->error('Error consultando historial del trabajador', ['tabla' => $tabla, 'status' => $respuesta->status()]);
+                        $error = 'No se pudo cargar todo el historial para este periodo.';
+                        break;
+                    }
+
+                    foreach ($respuesta->json() ?? [] as $registro) {
+                        $fecha = $registro[$columnaFecha] ?? null;
+                        if ($tabla === 'pedidos') {
+                            $titulo = 'Pedido';
+                            $detalle = 'Total registrado: $' . number_format((float) ($registro['total'] ?? 0), 0, ',', '.');
+                            $estado = $registro['estado'] ?? '';
+                            $pedidoFechaPorId[$registro['id']] = $fecha;
+                        } elseif ($tabla === 'reservas') {
+                            $titulo = 'Reserva';
+                            $detalle = (int) ($registro['personas'] ?? 0) . ' personas';
+                            $estado = $registro['estado'] ?? '';
+                        } elseif ($tabla === 'movimientos_inventario') {
+                            $titulo = 'Movimiento de inventario';
+                            $detalle = trim(($registro['tipo'] ?? 'Movimiento') . ' · ' . ($registro['cantidad'] ?? '') . ' · ' . ($registro['motivo'] ?? ''));
+                            $estado = '';
+                        } else {
+                            $titulo = 'Sesión de mesa';
+                            $detalle = !empty($registro['activa']) ? 'Sesión activa' : 'Sesión finalizada';
+                            $estado = '';
+                        }
+                        $eventos[] = [
+                            'id' => $registro['id'] ?? '',
+                            'tipo' => $titulo,
+                            'detalle' => $detalle,
+                            'estado' => $estado,
+                            'fecha' => $fecha,
+                        ];
+                    }
+                }
+
+                if ($pedidoFechaPorId) {
+                    $ventasRespuesta = $this->consultarSupabase('ventas', [
+                        'select' => 'id,pedido_id,total,estado',
+                        'pedido_id' => 'in.(' . implode(',', array_keys($pedidoFechaPorId)) . ')',
+                        'limit' => '1000',
+                    ]);
+                    if ($ventasRespuesta->successful()) {
+                        $ventaIds = [];
+                        $ventasPorId = [];
+                        foreach ($ventasRespuesta->json() ?? [] as $venta) {
+                            $ventaIds[] = $venta['id'];
+                            $ventasPorId[$venta['id']] = $venta;
+                            $eventos[] = [
+                                'id' => $venta['id'],
+                                'tipo' => 'Venta asociada al pedido',
+                                'detalle' => 'Pedido #' . substr($venta['pedido_id'], 0, 8) . ' · Total $' . number_format((float) $venta['total'], 0, ',', '.') . ' · fecha del pedido',
+                                'estado' => $venta['estado'],
+                                'fecha' => $pedidoFechaPorId[$venta['pedido_id']] ?? null,
+                            ];
+                        }
+
+                        if ($ventaIds) {
+                            $pagosRespuesta = $this->consultarSupabase('pagos', [
+                                'select' => 'id,venta_id,metodo_pago_id,monto,referencia,estado,creado_en',
+                                'venta_id' => 'in.(' . implode(',', $ventaIds) . ')',
+                                'creado_en' => 'gte.' . $inicio->toIso8601String(),
+                                'and' => '(creado_en.lt.' . $fin->toIso8601String() . ')',
+                                'order' => 'creado_en.desc',
+                                'limit' => '1000',
+                            ]);
+                            if ($pagosRespuesta->successful()) {
+                                $pagos = $pagosRespuesta->json() ?? [];
+                                $metodoIds = array_values(array_unique(array_filter(array_column($pagos, 'metodo_pago_id'))));
+                                $nombresMetodo = [];
+                                if ($metodoIds) {
+                                    $metodosRespuesta = $this->consultarSupabase('metodos_pago', [
+                                        'select' => 'id,nombre',
+                                        'id' => 'in.(' . implode(',', $metodoIds) . ')',
+                                    ]);
+                                    if ($metodosRespuesta->successful()) {
+                                        foreach ($metodosRespuesta->json() ?? [] as $metodo) $nombresMetodo[$metodo['id']] = $metodo['nombre'];
+                                    }
+                                }
+                                foreach ($pagos as $pago) {
+                                    $eventos[] = [
+                                        'id' => $pago['id'],
+                                        'tipo' => 'Pago registrado',
+                                        'detalle' => ($nombresMetodo[$pago['metodo_pago_id']] ?? 'Método de pago') . ' · $' . number_format((int) $pago['monto'], 0, ',', '.') . (!empty($pago['referencia']) ? ' · ' . $pago['referencia'] : ''),
+                                        'estado' => $pago['estado'],
+                                        'fecha' => $pago['creado_en'],
+                                    ];
+                                }
+                            } else {
+                                $error = 'Se cargó parte del historial, pero no se pudieron consultar los pagos.';
+                            }
+                        }
+                    } else {
+                        $error = 'Se cargó parte del historial, pero no se pudieron consultar las ventas.';
+                    }
+                }
+                usort($eventos, fn ($a, $b) => strcmp((string) $b['fecha'], (string) $a['fecha']));
+            } catch (ConnectionException $e) {
+                report($e);
+                $error = 'No fue posible conectar con Supabase. Inténtalo nuevamente.';
+            }
+        }
+
+        return view('trabajador.historial', compact('eventos', 'error', 'periodo', 'inicio', 'fin'));
     }
 
     

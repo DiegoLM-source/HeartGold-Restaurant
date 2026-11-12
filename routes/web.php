@@ -97,6 +97,21 @@ Route::middleware('rol:staff')
             'actualizarEstadoPedido'
         ])->name('pedidos.actualizar-estado');
 
+        Route::post('/ventas/registrar', [
+            DashboardController::class,
+            'registrarVenta'
+        ])->name('ventas.registrar');
+
+        Route::post('/ventas/{venta}/pagos', [
+            DashboardController::class,
+            'registrarPago'
+        ])->name('ventas.registrar-pago');
+
+        Route::post('/sesiones/{sesion}/cerrar', [
+            DashboardController::class,
+            'cerrarSesion'
+        ])->name('sesiones.cerrar');
+
         Route::post('/reservas/{reserva}/estado', [
             DashboardController::class,
             'actualizarEstadoReserva'
@@ -117,6 +132,21 @@ Route::middleware('rol:admin')
             AdministradorDashboardController::class,
             'index'
         ])->name('dashboard');
+
+        Route::post('/ingredientes', [
+            AdministradorDashboardController::class,
+            'storeIngrediente'
+        ])->middleware('throttle:10,1')->name('ingredientes.store');
+
+        Route::post('/categorias', [
+            AdministradorDashboardController::class,
+            'storeCategoria'
+        ])->middleware('throttle:10,1')->name('categorias.store');
+
+        Route::post('/productos', [
+            AdministradorDashboardController::class,
+            'storeProducto'
+        ])->middleware('throttle:10,1')->name('productos.store');
     });
 
 // Rutas anteriores del cliente.

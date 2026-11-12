@@ -13,6 +13,16 @@
         <div class="welcome-decoration" aria-hidden="true">✦</div>
     </div>
 
+    @if ($error)
+        <div class="worker-dashboard-alert" role="alert">{{ $error }}</div>
+    @else
+        <section class="worker-metrics" aria-label="Estado actual del restaurante">
+            <article><span>Mesas libres</span><strong>{{ $estadisticas['mesas_libres'] }}</strong></article>
+            <article><span>Mesas ocupadas</span><strong>{{ $estadisticas['mesas_ocupadas'] }}</strong></article>
+            <article><span>Pedidos pendientes</span><strong>{{ $estadisticas['pedidos_pendientes'] }}</strong></article>
+            <article><span>Reservas pendientes</span><strong>{{ $estadisticas['reservas_pendientes'] }}</strong></article>
+        </section>
+    @endif
     <div class="section-heading">
         <div><h2>Accesos rápidos</h2><p>Selecciona el área que necesitas gestionar.</p></div>
     </div>
@@ -35,10 +45,5 @@
                 <span class="shortcut-arrow" aria-hidden="true">→</span>
             </a>
         @endforeach
-    </div>
-
-    <div class="worker-note">
-        <strong>Configuración inicial</strong>
-        <p>La navegación y las pantallas base ya están preparadas. Los indicadores y operaciones se conectarán a Supabase al implementar cada módulo.</p>
     </div>
 @endsection

@@ -25,7 +25,7 @@
 .cliente-sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    z-index: 100;
+    z-index: 120;
     width: 258px;
     height: 100vh;
     display: flex;
@@ -74,10 +74,13 @@
 }
 
 .cliente-nav {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 7px;
     padding-top: 25px;
+    pointer-events: auto;
 }
 
 .cliente-nav-label {
@@ -89,6 +92,8 @@
 }
 
 .cliente-nav-link {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 13px;
@@ -99,6 +104,8 @@
     text-decoration: none;
     font-size: 13px;
     transition: background .2s;
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 .cliente-nav-link > span:first-child {
@@ -269,7 +276,7 @@
     .cliente-overlay {
         position: fixed;
         inset: 0;
-        z-index: 90;
+        z-index: 110;
         background: rgba(30,15,20,.45);
     }
 

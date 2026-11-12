@@ -1,14 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('[data-cliente-toggle]');
     const overlay = document.querySelector('[data-cliente-overlay]');
+    const links = document.querySelectorAll('.cliente-nav-link');
 
-    if (!toggle || !overlay) return;
+    const setMenuOpen = (isOpen) => {
+        document.body.classList.toggle('cliente-menu-open', isOpen);
+        toggle?.setAttribute('aria-expanded', String(isOpen));
+    };
 
-    toggle.addEventListener('click', () => {
-        document.body.classList.toggle('cliente-menu-open');
+    toggle?.addEventListener('click', () => {
+        setMenuOpen(!document.body.classList.contains('cliente-menu-open'));
     });
 
-    overlay.addEventListener('click', () => {
-        document.body.classList.remove('cliente-menu-open');
+    overlay?.addEventListener('click', () => setMenuOpen(false));
+
+    links.forEach((link) => {
+        link.addEventListener('click', () => setMenuOpen(false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') setMenuOpen(false);
     });
 });

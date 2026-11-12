@@ -16,7 +16,7 @@
 
     <div class="cliente-overlay" data-cliente-overlay></div>
 
-    <aside class="cliente-sidebar" data-cliente-sidebar>
+    <aside id="cliente-sidebar" class="cliente-sidebar" data-cliente-sidebar>
 
         <div class="cliente-brand">
             <div class="cliente-brand-icon">R</div>
@@ -27,7 +27,7 @@
             </div>
         </div>
 
-        <nav class="cliente-nav">
+        <nav class="cliente-nav" aria-label="Navegación del cliente">
             <span class="cliente-nav-label">MI ESPACIO</span>
 
             <a href="{{ route('cliente.dashboard') }}"
@@ -38,34 +38,39 @@
 
             <span class="cliente-nav-label">RESTAURANTE</span>
 
-            <a href="#" class="cliente-nav-link disabled" aria-disabled="true">
+            <a href="{{ route('cliente.menu.index') }}" class="cliente-nav-link {{ request()->routeIs('cliente.menu.*') ? 'active' : '' }}">
                 <span>▦</span>
                 <span>Menú</span>
             </a>
 
-            <a href="#" class="cliente-nav-link disabled" aria-disabled="true">
+            <a href="{{ route('cliente.carrito.index') }}" class="cliente-nav-link {{ request()->routeIs('cliente.carrito.*') ? 'active' : '' }}">
+                <span>▣</span>
+                <span>Mi carrito</span>
+            </a>
+
+            <a href="{{ route('cliente.pedidos.index') }}" class="cliente-nav-link {{ request()->routeIs('cliente.pedidos.*') ? 'active' : '' }}">
                 <span>▤</span>
                 <span>Mis pedidos</span>
             </a>
 
-            <a href="#" class="cliente-nav-link disabled" aria-disabled="true">
+            <a href="{{ route('cliente.sesion.show') }}" class="cliente-nav-link {{ request()->routeIs('cliente.sesion.*') ? 'active' : '' }}">
                 <span>◷</span>
                 <span>Mi sesión</span>
             </a>
 
-            <a href="#" class="cliente-nav-link disabled" aria-disabled="true">
+            <a href="{{ route('cliente.reservas.index') }}" class="cliente-nav-link {{ request()->routeIs('cliente.reservas.*') ? 'active' : '' }}">
                 <span>▣</span>
                 <span>Reservas</span>
             </a>
 
             <span class="cliente-nav-label">MI CUENTA</span>
 
-            <a href="#" class="cliente-nav-link disabled" aria-disabled="true">
+            <a href="{{ route('cliente.historial.index') }}" class="cliente-nav-link {{ request()->routeIs('cliente.historial.*') ? 'active' : '' }}">
                 <span>▧</span>
                 <span>Historial</span>
             </a>
 
-            <a href="#" class="cliente-nav-link disabled" aria-disabled="true">
+            <a href="{{ route('cliente.perfil.edit') }}" class="cliente-nav-link {{ request()->routeIs('cliente.perfil.*') ? 'active' : '' }}">
                 <span>⚙</span>
                 <span>Mi perfil</span>
             </a>
@@ -103,7 +108,9 @@
                 <button type="button"
                         class="cliente-menu-toggle"
                         data-cliente-toggle
-                        aria-label="Abrir menú">
+                        aria-label="Abrir menú"
+                        aria-expanded="false"
+                        aria-controls="cliente-sidebar">
                     ☰
                 </button>
 

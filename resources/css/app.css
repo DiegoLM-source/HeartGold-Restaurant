@@ -12,6 +12,7 @@
 @import './variables.css';
 @import './layouts/trabajador.css';
 @import './auth/login.css';
+@import './admin/admin.css';
 @import './trabajador/worker.css';
 @import './trabajador/mesas.css';
 @import './trabajador/pedidos.css';
@@ -19,6 +20,12 @@
 @import './trabajador/inventario.css';
 @import './cliente/layout.css';
 @import './cliente/dashboard.css';
+@import './cliente/pedidos.css';
+@import './cliente/perfil.css';
+@import './cliente/historial.css';
+@import './cliente/menu.css';
+@import './cliente/carrito.css';
+@import './cliente/reservas.css';
 @import './cliente/mesa.css';
 @import './cliente/mesa-qr.css';
 @import './trabajador/solicitudes-mesa.css';

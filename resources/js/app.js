@@ -1,5 +1,6 @@
 import './cliente/cliente.js';
 import './cliente/qr.js';
+import './admin/admin.js';
 
 const body = document.body;
 const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
@@ -307,6 +308,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     buscador?.addEventListener('input', filtrarPedidos);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form[data-disable-on-submit]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            if (form.dataset.submitting === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+            const button = event.submitter || form.querySelector('button[type="submit"]');
+            if (button) {
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.textContent = 'Enviando…';
+            }
+        });
+    });
 });
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -109,9 +109,9 @@
         </p>
 
         @if ($sesion && $mesa)
-            <span class="cliente-coming-soon">Disponible próximamente</span>
+            <a class="cliente-action-link" href="{{ route('cliente.menu.index') }}">Explorar menú</a>
         @else
-            <span class="cliente-coming-soon">Necesitas una mesa activa</span>
+            <a class="cliente-action-link" href="{{ route('cliente.menu.index') }}">Explorar menú</a>
         @endif
     </article>
 
@@ -121,16 +121,12 @@
         <p>
             Consulta los pedidos que has realizado y sus estados.
         </p>
-        <span class="cliente-coming-soon">Próximamente</span>
+        <a class="cliente-action-link" href="{{ route('cliente.pedidos.index') }}">Consultar mis pedidos</a>
     </article>
 
     <article class="cliente-shortcut-card">
         <div class="cliente-shortcut-icon">▣</div>
-        <h3>Reservar mesa</h3>
-        <p>
-            Organiza tu próxima visita seleccionando fecha y cantidad de personas.
-        </p>
-        <span class="cliente-coming-soon">Próximamente</span>
+        <h3>Mis reservas</h3><p>Consulta las reservas vinculadas a tu cuenta y sus estados.</p><a class="cliente-action-link" href="{{ route('cliente.reservas.create') }}">Solicitar una reserva</a> · <a class="cliente-action-link" href="{{ route('cliente.reservas.index') }}">Ver mis reservas</a>
     </article>
 
     <article class="cliente-shortcut-card">
@@ -139,7 +135,7 @@
         <p>
             Consulta tus sesiones, consumos y comprobantes anteriores.
         </p>
-        <span class="cliente-coming-soon">Próximamente</span>
+        <a class="cliente-action-link" href="{{ route('cliente.historial.index') }}">Consultar mi historial</a>
     </article>
 
 </div>
