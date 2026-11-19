@@ -15,12 +15,20 @@
                 <span><strong>La Mesa</strong><small>Administración</small></span>
             </a>
 
-            <span class="admin-nav-caption">GESTIÓN DEL RESTAURANTE</span>
             <nav class="admin-nav" aria-label="Navegación de administración">
-                <a href="#resumen" class="admin-nav-link active"><span>⌂</span> Resumen</a>
-                <a href="#platillos" class="admin-nav-link"><span>✦</span> Platillos</a>
-                <a href="#ingredientes" class="admin-nav-link"><span>◌</span> Ingredientes</a>
-                <a href="#categorias" class="admin-nav-link"><span>▦</span> Categorías</a>
+                <span class="admin-nav-caption">GESTIÓN DEL RESTAURANTE</span>
+                <a href="{{ route('admin.dashboard') }}#resumen" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"><span>⌂</span> Resumen</a>
+                <a href="{{ route('admin.dashboard') }}#platillos" class="admin-nav-link"><span>✦</span> Platillos</a>
+                <a href="{{ route('admin.dashboard') }}#ingredientes" class="admin-nav-link"><span>◌</span> Ingredientes</a>
+                <a href="{{ route('admin.dashboard') }}#categorias" class="admin-nav-link"><span>▦</span> Categorías</a>
+                <a href="{{ route('admin.reportes') }}" class="admin-nav-link {{ request()->routeIs('admin.reportes*') ? 'active' : '' }}"><span>▤</span> Reportes</a>
+                <a href="{{ route('admin.mesas') }}" class="admin-nav-link {{ request()->routeIs('admin.mesas*') ? 'active' : '' }}"><span>▦</span> Mesas</a>
+                <a href="{{ route('admin.personal') }}" class="admin-nav-link {{ request()->routeIs('admin.personal') ? 'active' : '' }}"><span>♙</span> Personal</a>
+                <span class="admin-nav-caption admin-nav-caption-secondary">OPERACIÓN</span>
+                <a href="{{ route('trabajador.dashboard') }}" class="admin-nav-link {{ request()->routeIs('trabajador.dashboard') ? 'active' : '' }}"><span>⌂</span> Inicio operativo</a>
+                @foreach (['mesas' => ['▦', 'Mesas'], 'pedidos' => ['▤', 'Pedidos'], 'reservas' => ['▣', 'Reservas'], 'inventario' => ['▥', 'Inventario'], 'ventas' => ['$', 'Ventas y pagos'], 'historial' => ['◷', 'Historial']] as $seccion => $datos)
+                    <a href="{{ route('trabajador.seccion', ['seccion' => $seccion]) }}" class="admin-nav-link {{ request()->route('seccion') === $seccion ? 'active' : '' }}"><span>{{ $datos[0] }}</span> {{ $datos[1] }}</a>
+                @endforeach
             </nav>
 
             <div class="admin-sidebar-bottom">

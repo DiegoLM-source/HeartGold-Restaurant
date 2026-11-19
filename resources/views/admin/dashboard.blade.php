@@ -38,7 +38,7 @@
     </section>
 
     <section class="admin-section-heading" id="platillos">
-        <div><span class="admin-eyebrow">CARTA</span><h2>Platillos</h2><p>Crea productos y asígnalos a una categoría.</p></div>
+        <div><span class="admin-eyebrow">CARTA</span><h2>Platillos</h2><p>Crea productos y asígnalos a una categoría. El coste por porción usa los lotes de compra registrados.</p></div>
         <span class="admin-section-count">{{ count($productos) }} total</span>
     </section>
     <section class="admin-management-grid">
@@ -85,16 +85,36 @@
             <div class="admin-record-list">
                 @forelse ($productos as $producto)
                     @php($categoriaProducto = collect($categorias)->firstWhere('id', $producto['categoria_id'] ?? null))
+                    @php($costoPorcionProducto = $costoPlatillos[$producto['id']] ?? 0)
+                    @php($margenPorcionProducto = (int) $producto['precio'] - $costoPorcionProducto)
                     <article class="admin-record">
                         <span class="admin-record-thumb">{{ mb_strtoupper(mb_substr($producto['nombre'], 0, 1)) }}</span>
                         <div class="admin-record-copy"><strong>{{ $producto['nombre'] }}</strong><small>{{ $categoriaProducto['nombre'] ?? 'Sin categoría' }} · {{ !empty($producto['activo']) ? 'Activo' : 'Inactivo' }}@if (!empty($producto['tiempo_preparacion_min'])) · {{ $producto['tiempo_preparacion_min'] }} min @endif</small>
                             @if (!empty($recetasProductos[$producto['id']]))
-                                <small>Receta: @foreach ($recetasProductos[$producto['id']] as $lineaReceta){{ $lineaReceta['cantidad'] }} {{ $lineaReceta['unidad'] }} {{ $lineaReceta['nombre'] }}@if (!$loop->last) · @endif @endforeach</small>
+                                <small>Receta:
+                                    @foreach ($recetasProductos[$producto['id']] as $lineaReceta)
+                                        {{ $lineaReceta['cantidad'] }} {{ $lineaReceta['unidad'] }} {{ $lineaReceta['nombre'] }}
+                                        @if (isset($lineaReceta['costo_linea']))
+                                            · ${{ number_format($lineaReceta['costo_linea'], 0, ',', '.') }}
+                                        @endif
+                                        @if (!$loop->last) · @endif
+                                    @endforeach
+                                </small>
+                                @if ($costoDisponiblePlatillos[$producto['id']] ?? false)
+                                    <small class="admin-product-cost"><strong>Coste por porción: ${{ number_format($costoPorcionProducto, 0, ',', '.') }}</strong><span>Coste promedio ponderado de compras</span></small>
+                                    <small class="admin-product-margin">Margen bruto estimado: ${{ number_format($margenPorcionProducto, 0, ',', '.') }}@if ((int) $producto['precio'] > 0) · {{ number_format($margenPorcionProducto / (int) $producto['precio'] * 100, 1, ',', '.') }}% del precio @endif</small>
+                                @else
+                                    <small class="admin-recipe-missing">Registra lotes con coste para calcular el coste completo de este platillo.</small>
+                                @endif
                             @else
                                 <small class="admin-recipe-missing">Sin receta configurada</small>
                             @endif
                         </div>
                         <strong class="admin-record-price">${{ number_format((int) $producto['precio'], 0, ',', '.') }}</strong>
+                        <div class="admin-record-actions">
+                            <a class="admin-mini-action admin-product-action edit-action" href="{{ route('admin.productos.edit', $producto['id']) }}" aria-label="Editar {{ $producto['nombre'] }}" title="Editar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l4.2-.9L19.4 7.9a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z"/></svg><span>Editar</span></a>
+                            <form method="POST" action="{{ route('admin.productos.estado', $producto['id']) }}">@csrf @method('PATCH')<input type="hidden" name="activo" value="{{ !empty($producto['activo']) ? 0 : 1 }}"><button class="admin-mini-action admin-product-action archive-action" type="submit" aria-label="{{ !empty($producto['activo']) ? 'Archivar' : 'Activar' }} {{ $producto['nombre'] }}" title="{{ !empty($producto['activo']) ? 'Archivar' : 'Activar' }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h17v13h-17zM2.5 4h19v3h-19zM9 11h6"/></svg><span>{{ !empty($producto['activo']) ? 'Archivar' : 'Activar' }}</span></button></form>
+                        </div>
                     </article>
                 @empty
                     <div class="admin-empty"><span>✦</span><strong>Aún no hay platillos</strong><small>El primero que agregues aparecerá aquí.</small></div>
@@ -119,7 +139,7 @@
             <label>Descripción<textarea name="descripcion" rows="2" maxlength="1000" placeholder="Notas opcionales">{{ old('descripcion') }}</textarea></label>
             <label>Alerta de stock mínimo *<input type="number" name="stock_minimo" min="0" step="0.001" value="{{ old('stock_minimo', '0') }}" required></label>
             <button class="admin-submit submit-rose" type="submit">Crear ingrediente <span>→</span></button>
-            <p class="admin-form-footnote">Para sumar existencias, registra luego un lote desde Inventario del trabajador.</p>
+            <p class="admin-form-footnote">Para sumar existencias, registra luego un lote en el módulo de inventario.</p>
         </form>
 
         <div class="admin-list-card">
@@ -128,8 +148,9 @@
                 @forelse ($ingredientes as $ingrediente)
                     <article class="admin-record">
                         <span class="admin-record-thumb record-thumb-rose">◌</span>
-                        <div class="admin-record-copy"><strong>{{ $ingrediente['nombre'] }}</strong><small>{{ $ingrediente['tipo'] ?: 'Ingrediente' }} · {{ $ingrediente['unidad'] }} · mínimo {{ $ingrediente['stock_minimo'] }}</small></div>
+                        <div class="admin-record-copy"><strong>{{ $ingrediente['nombre'] }}</strong><small>{{ $ingrediente['tipo'] ?: 'Ingrediente' }} · {{ $ingrediente['unidad'] }} · mínimo {{ $ingrediente['stock_minimo'] }}@if (isset($costosIngrediente[$ingrediente['id']])) · ${{ number_format($costosIngrediente[$ingrediente['id']], 2, ',', '.') }}/{{ $ingrediente['unidad'] }}@else · Sin coste de compra @endif</small></div>
                         <span class="admin-status {{ !empty($ingrediente['activo']) ? 'status-active' : 'status-inactive' }}">{{ !empty($ingrediente['activo']) ? 'Activo' : 'Inactivo' }}</span>
+                        <div class="admin-record-actions"><a class="admin-icon-action edit-action" href="{{ route('admin.ingredientes.edit', $ingrediente['id']) }}" aria-label="Editar {{ $ingrediente['nombre'] }}" title="Editar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l4.2-.9L19.4 7.9a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z"/></svg></a><form method="POST" action="{{ route('admin.ingredientes.estado', $ingrediente['id']) }}">@csrf @method('PATCH')<input type="hidden" name="activo" value="{{ !empty($ingrediente['activo']) ? 0 : 1 }}"><button class="admin-icon-action archive-action" type="submit" aria-label="{{ !empty($ingrediente['activo']) ? 'Archivar' : 'Activar' }} {{ $ingrediente['nombre'] }}" title="{{ !empty($ingrediente['activo']) ? 'Archivar' : 'Activar' }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h17v13h-17zM2.5 4h19v3h-19zM9 11h6"/></svg></button></form></div>
                     </article>
                 @empty
                     <div class="admin-empty"><span>◌</span><strong>Sin ingredientes todavía</strong><small>Agrega ingredientes para preparar tus platillos.</small></div>
@@ -153,7 +174,7 @@
         </form>
         <div class="admin-category-list">
             @forelse ($categorias as $categoria)
-                <div class="admin-category-chip"><span>▦</span><strong>{{ $categoria['nombre'] }}</strong><small>{{ !empty($categoria['activa']) ? 'Activa' : 'Inactiva' }}</small></div>
+                <div class="admin-category-chip"><span>▦</span><strong>{{ $categoria['nombre'] }}</strong><small>{{ !empty($categoria['activa']) ? 'Activa' : 'Inactiva' }}</small><a class="admin-icon-action edit-action" href="{{ route('admin.categorias.edit', $categoria['id']) }}" aria-label="Editar {{ $categoria['nombre'] }}" title="Editar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l4.2-.9L19.4 7.9a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z"/></svg></a><form method="POST" action="{{ route('admin.categorias.estado', $categoria['id']) }}">@csrf @method('PATCH')<input type="hidden" name="activo" value="{{ !empty($categoria['activa']) ? 0 : 1 }}"><button class="admin-icon-action archive-action" type="submit" aria-label="{{ !empty($categoria['activa']) ? 'Archivar' : 'Activar' }} {{ $categoria['nombre'] }}" title="{{ !empty($categoria['activa']) ? 'Archivar' : 'Activar' }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h17v13h-17zM2.5 4h19v3h-19zM9 11h6"/></svg></button></form></div>
             @empty
                 <div class="admin-empty"><strong>No hay categorías creadas.</strong><small>Crea una para organizar los platillos.</small></div>
             @endforelse

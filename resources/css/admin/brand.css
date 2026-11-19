@@ -1,0 +1,398 @@
+.admin-body {
+    --admin-ink: #3a2028;
+    --admin-muted: #806f72;
+    --admin-line: #eadfe1;
+    --admin-paper: #fffefa;
+    --admin-olive: #641d32;
+    --admin-olive-dark: #4b1023;
+    --admin-rose: #a44f63;
+    --admin-gold: #d7b854;
+    background: #fbf8ed;
+}
+
+.admin-sidebar {
+    background: #641d32;
+}
+
+.admin-brand-mark,
+.admin-account-avatar {
+    background: #fffbc7;
+    color: #641d32;
+}
+
+.admin-brand small,
+.admin-account small {
+    color: #f0dce1;
+}
+
+.admin-nav-caption {
+    color: #e4bbc5;
+}
+
+.admin-nav-link > span {
+    color: #f3dfa0;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
+    background: #ffffff19;
+}
+
+.admin-nav-link.active {
+    box-shadow: inset 3px 0 #fffbc7;
+    color: #fff;
+}
+
+.admin-nav-caption-secondary {
+    margin-top: 21px;
+}
+
+.admin-nav .admin-nav-link.active {
+    background: #fffbc7;
+    color: #641d32;
+    box-shadow: inset 3px 0 #d9b746;
+}
+
+.admin-nav .admin-nav-link.active > span {
+    color: #641d32;
+}
+
+.admin-topbar {
+    border-color: #eee5d3;
+    background: #fffdf4;
+}
+
+.admin-live i {
+    background: #b49a47;
+    box-shadow: 0 0 0 4px #d7b8542e;
+}
+
+.admin-hero {
+    background: linear-gradient(115deg, #fffbc7 0%, #fff8df 64%, #f7e9e9 100%);
+}
+
+.admin-eyebrow {
+    color: #8a5a63;
+}
+
+.admin-hero h1,
+.admin-section-heading h2 {
+    color: #4b1023;
+}
+
+.admin-hero h1 em {
+    color: #8b3c53;
+}
+
+.admin-hero p,
+.admin-section-heading p {
+    color: #75656a;
+}
+
+.admin-primary-link,
+.admin-submit {
+    background: #641d32;
+}
+
+.admin-primary-link:hover,
+.admin-submit:hover {
+    background: #4b1023;
+}
+
+.admin-art-sun {
+    background: #edda8e;
+}
+
+.admin-art-plate {
+    background: #d8b64c;
+}
+
+.admin-art-plate i {
+    background: #641d32;
+}
+
+.admin-art-plate b {
+    background: #a44f63;
+}
+
+.admin-art-leaf {
+    background: #80865c;
+}
+
+.leaf-two {
+    background: #a0a47a;
+}
+
+.admin-stat-card,
+.admin-form-card,
+.admin-list-card,
+.admin-category-form,
+.admin-category-list {
+    box-shadow: 0 5px 20px #641d3208;
+}
+
+.icon-olive,
+.icon-gold,
+.admin-card-symbol {
+    background: #fff5cf;
+    color: #641d32;
+}
+
+.icon-rose,
+.card-symbol-rose {
+    background: #f7e8e9;
+    color: #8b3c53;
+}
+
+.admin-stat-card strong,
+.admin-card-title h3,
+.admin-list-heading h3,
+.admin-category-form h3,
+.admin-record-copy strong,
+.admin-category-chip strong {
+    color: #4b2632;
+}
+
+.admin-stat-note,
+.admin-stat-card small,
+.admin-card-title p,
+.admin-list-heading p,
+.admin-record-copy small,
+.admin-section-count {
+    color: #806f72;
+}
+
+.admin-section-count,
+.admin-list-heading > span {
+    background: #f6f0df;
+}
+
+.admin-form-card input:focus,
+.admin-form-card textarea:focus,
+.admin-form-card select:focus,
+.admin-category-form input:focus {
+    border-color: #a44f63;
+    box-shadow: 0 0 0 3px #a44f631a;
+}
+
+.admin-form-card input,
+.admin-form-card textarea,
+.admin-form-card select,
+.admin-category-form input {
+    border-color: #e8dcdd;
+    background: #fffefa;
+}
+
+.submit-rose {
+    background: #8b3c53;
+}
+
+.submit-rose:hover {
+    background: #6f293e;
+}
+
+.admin-recipe-editor,
+.admin-table-preview {
+    border-color: #eee1ce;
+    background: #fffaf0;
+}
+
+.admin-recipe-heading strong,
+.admin-table-preview-heading strong {
+    color: #5b303a;
+}
+
+.admin-add-recipe {
+    border-color: #ebdca2;
+    background: #fff7d9;
+    color: #641d32;
+}
+
+.admin-add-recipe:hover {
+    background: #fff0b8;
+}
+
+.admin-remove-recipe,
+.archive-action {
+    border-color: #ead4d9;
+    background: #fff6f5;
+    color: #8b3c53;
+}
+
+.admin-remove-recipe:hover,
+.archive-action:hover {
+    border-color: #d8aab6;
+    background: #f8e8e9;
+    color: #641d32;
+}
+
+.admin-record-thumb {
+    background: #fff5cf;
+    color: #641d32;
+}
+
+.record-thumb-rose {
+    background: #f7e8e9;
+    color: #8b3c53;
+}
+
+.admin-record-price {
+    color: #641d32;
+}
+
+.admin-product-cost {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 8px;
+    align-items: baseline;
+}
+
+.admin-product-cost strong {
+    color: #641d32;
+}
+
+.admin-product-cost span {
+    color: #806f72;
+}
+
+.admin-product-margin {
+    color: #806f72 !important;
+}
+
+.admin-record-copy .admin-product-cost,
+.admin-record-copy .admin-product-margin {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+}
+
+.admin-product-action {
+    min-height: 32px;
+    gap: 6px;
+    padding: 6px 9px;
+    border-color: #e5d4d8;
+    border-radius: 8px;
+    background: #fff;
+    color: #641d32;
+    font-size: 10px;
+}
+
+.admin-product-action svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.admin-product-action:hover {
+    border-color: #c99ba8;
+    background: #fbf0ef;
+    color: #4b1023;
+}
+
+.admin-product-action.archive-action {
+    border-color: #ebdca2;
+    background: #fff8dd;
+    color: #6e5120;
+}
+
+.admin-product-action.archive-action:hover {
+    border-color: #d9c26e;
+    background: #fff0b8;
+    color: #4b1023;
+}
+
+.admin-icon-action {
+    border-color: #ead4d9;
+    background: #fff6f5;
+    color: #641d32;
+}
+
+.admin-icon-action:hover,
+.admin-icon-action:focus-visible {
+    border-color: #c99ba8;
+    background: #f8e8e9;
+}
+
+.admin-table-preview-viewport {
+    border-color: #eadfcf;
+    background: #fffefa;
+}
+
+.admin-table-preview-marker {
+    border-color: #641d32;
+    background: #fff4c4;
+    color: #4b1023;
+}
+
+.admin-table-preview-coordinates b {
+    color: #641d32;
+}
+
+.admin-report-download {
+    border-color: #eadb9d;
+    background: #fff7d9;
+    color: #641d32;
+}
+
+.admin-report-download:hover {
+    background: #fff0b8;
+}
+
+.admin-report-profit {
+    border-color: #ead4d9;
+    background: #fff7eb;
+}
+
+.admin-report-profit h2,
+.admin-report-profit > strong,
+.admin-report-bar-row > strong,
+.admin-report-data-row > strong {
+    color: #641d32;
+}
+
+.admin-report-bar-row i {
+    background: #9a5266;
+}
+
+.admin-report-profit > small {
+    color: #806f72;
+}
+
+.admin-category-chip {
+    border-color: #eee2d0;
+    background: #fffdf6;
+}
+
+.admin-category-chip > span {
+    color: #8b3c53;
+}
+
+.admin-cancel-link {
+    color: #806f72;
+}
+
+.admin-topbar-logout {
+    border-color: #eadfe1;
+    background: #fffefa;
+    color: #641d32;
+}
+
+.admin-topbar-logout:hover {
+    background: #fff5cf;
+    color: #4b1023;
+}
+
+.admin-footer {
+    color: #8b777d;
+}
+
+@media (max-width: 620px) {
+    .admin-record-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

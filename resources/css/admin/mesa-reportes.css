@@ -1,0 +1,158 @@
+.admin-report-filter select {
+    min-height: 39px;
+    padding: 8px 30px 8px 10px;
+    border: 1px solid #e5e1d7;
+    border-radius: 8px;
+    background: #fffefa;
+    color: #3c3a32;
+    font: 11px Arial, sans-serif;
+}
+
+.admin-mesa-reports {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-mesa-history {
+    overflow: hidden;
+    border: 1px solid #e8e4da;
+    border-radius: 12px;
+    background: #fffefa;
+}
+
+.admin-mesa-history summary {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.4fr) repeat(3, minmax(100px, 1fr)) 18px;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.admin-mesa-history summary::-webkit-details-marker {
+    display: none;
+}
+
+.admin-mesa-history summary > span:not(.admin-mesa-name) {
+    display: grid;
+    gap: 4px;
+}
+
+.admin-mesa-history summary small,
+.admin-mesa-order header small {
+    color: #969082;
+    font-size: 9px;
+}
+
+.admin-mesa-history summary strong {
+    color: #4e5c42;
+    font-size: 11px;
+}
+
+.admin-mesa-name {
+    display: grid;
+    gap: 4px;
+}
+
+.admin-mesa-name > strong {
+    color: #3f4337 !important;
+    font: 600 15px Georgia, serif !important;
+}
+
+.admin-mesa-expand {
+    color: #8f5149;
+    font-size: 18px;
+    transition: transform 160ms ease;
+}
+
+.admin-mesa-history[open] .admin-mesa-expand {
+    transform: rotate(180deg);
+}
+
+.admin-mesa-orders {
+    display: grid;
+    gap: 9px;
+    padding: 0 16px 14px;
+}
+
+.admin-mesa-order {
+    padding: 12px 14px;
+    border: 1px solid #f0eee8;
+    border-radius: 9px;
+    background: #fff;
+}
+
+.admin-mesa-order header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.admin-mesa-order header div {
+    display: grid;
+    gap: 4px;
+}
+
+.admin-mesa-order header strong {
+    color: #4e5c42;
+    font-size: 11px;
+}
+
+.admin-mesa-order ul {
+    display: grid;
+    gap: 5px;
+    margin: 10px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-mesa-order li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #67665b;
+    font-size: 10px;
+}
+
+.admin-mesa-order li span {
+    color: #4e5c42;
+    white-space: nowrap;
+}
+
+.admin-mesa-payment,
+.admin-mesa-notes {
+    color: #8c756d;
+    font-size: 9px;
+}
+
+.admin-mesa-notes {
+    margin: 8px 0 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+    .admin-report-filter form {
+        flex-wrap: wrap;
+    }
+
+    .admin-mesa-history summary {
+        grid-template-columns: minmax(130px, 1.5fr) repeat(2, minmax(90px, 1fr)) 18px;
+    }
+
+    .admin-mesa-history summary > span:nth-child(4) {
+        grid-column: 2 / 4;
+    }
+}
+
+@media (max-width: 500px) {
+    .admin-mesa-history summary {
+        grid-template-columns: minmax(110px, 1fr) minmax(90px, 1fr) 18px;
+        gap: 10px;
+    }
+
+    .admin-mesa-history summary > span:nth-child(4) {
+        grid-column: 2;
+    }
+}

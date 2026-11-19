@@ -13,6 +13,9 @@
 @import './layouts/trabajador.css';
 @import './auth/login.css';
 @import './admin/admin.css';
+@import './admin/reportes.css';
+@import './admin/mesa-reportes.css';
+@import './admin/brand.css';
 @import './trabajador/worker.css';
 @import './trabajador/mesas.css';
 @import './trabajador/pedidos.css';

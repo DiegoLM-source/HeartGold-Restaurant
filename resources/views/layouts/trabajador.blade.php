@@ -22,7 +22,7 @@
             <span class="brand-mark">R</span>
             <div class="brand-copy">
                 <strong>Restaurante</strong>
-                <small>Panel de trabajador</small>
+                <small>{{ session('usuario.role') === 'admin' ? 'Operación del restaurante' : 'Panel de trabajador' }}</small>
             </div>
 
             <button type="button" class="sidebar-icon-button mobile-close"
@@ -52,6 +52,9 @@
                     <span class="nav-label">{{ $datos[1] }}</span>
                 </a>
             @endforeach
+            @if (session('usuario.role') === 'admin')
+                <a href="{{ route('admin.dashboard') }}" class="worker-nav-link"><span class="nav-symbol">↩</span><span class="nav-label">Administración</span></a>
+            @endif
         </nav>
 
         <div class="worker-sidebar-bottom">
@@ -60,8 +63,8 @@
                     {{ strtoupper(substr(session('usuario.full_name') ?? 'T', 0, 1)) }}
                 </div>
                 <div class="user-copy">
-                    <strong>{{ session('usuario.full_name') ?? 'Trabajador' }}</strong>
-                    <small>Personal</small>
+                    <strong>{{ session('usuario.full_name') ?? (session('usuario.role') === 'admin' ? 'Administrador' : 'Trabajador') }}</strong>
+                    <small>{{ session('usuario.role') === 'admin' ? 'Administrador' : 'Personal' }}</small>
                 </div>
             </div>
 
@@ -90,7 +93,7 @@
 
             <div class="topbar-user">
                 <span class="status-dot"></span>
-                {{ session('usuario.full_name') ?? 'Trabajador' }}
+                {{ session('usuario.full_name') ?? (session('usuario.role') === 'admin' ? 'Administrador' : 'Trabajador') }}
             </div>
         </header>
 

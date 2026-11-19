@@ -7,7 +7,7 @@
     <div class="worker-welcome">
         <div>
             <span class="eyebrow">PANEL DE OPERACIONES</span>
-            <h2>¡Bienvenido, {{ session('usuario.full_name') ?: 'trabajador' }}!</h2>
+            <h2>¡Bienvenido, {{ session('usuario.full_name') ?: (session('usuario.role') === 'admin' ? 'administrador' : 'trabajador') }}!</h2>
             <p>Desde aquí podrás supervisar y gestionar las actividades del restaurante.</p>
         </div>
         <div class="welcome-decoration" aria-hidden="true">✦</div>

@@ -9,8 +9,8 @@ RUN npm run build
 FROM php:8.4-cli
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libcurl4-openssl-dev libicu-dev libonig-dev libsqlite3-dev libzip-dev unzip \
-    && docker-php-ext-install bcmath curl intl mbstring opcache pdo_sqlite zip \
+    && apt-get install -y --no-install-recommends libcurl4-openssl-dev libicu-dev libonig-dev libsqlite3-dev libxml2-dev libzip-dev unzip \
+    && docker-php-ext-install bcmath curl dom intl mbstring opcache pdo_sqlite zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

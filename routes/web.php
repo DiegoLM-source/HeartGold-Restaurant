@@ -56,7 +56,7 @@ Route::post('/mesa/{codigo}/solicitar', [
     ->name('mesa.solicitar');
 
 // Módulos del trabajador.
-Route::middleware('rol:staff')
+Route::middleware('rol:staff,admin')
     ->prefix('trabajador')
     ->name('trabajador.')
     ->group(function () {
@@ -132,6 +132,14 @@ Route::middleware('rol:admin')
             AdministradorDashboardController::class,
             'index'
         ])->name('dashboard');
+        Route::get('/reportes', [
+           AdministradorDashboardController::class,
+           'reportes'
+        ])->name('reportes');
+        Route::get('/reportes/pdf', [
+           AdministradorDashboardController::class,
+           'exportarReportePdf'
+        ])->name('reportes.pdf');
 
         Route::post('/ingredientes', [
             AdministradorDashboardController::class,
@@ -147,6 +155,27 @@ Route::middleware('rol:admin')
             AdministradorDashboardController::class,
             'storeProducto'
         ])->middleware('throttle:10,1')->name('productos.store');
+
+        Route::get('/mesas', [AdministradorDashboardController::class, 'mesas'])->name('mesas');
+        Route::post('/mesas', [AdministradorDashboardController::class, 'storeMesa'])->name('mesas.store');
+        Route::get('/mesas/{mesa}/editar', [AdministradorDashboardController::class, 'editarMesa'])->name('mesas.edit');
+        Route::patch('/mesas/{mesa}', [AdministradorDashboardController::class, 'updateMesa'])->name('mesas.update');
+        Route::patch('/mesas/{mesa}/estado', [AdministradorDashboardController::class, 'estadoMesa'])->name('mesas.estado');
+
+        Route::get('/productos/{producto}/editar', [AdministradorDashboardController::class, 'editarProducto'])->name('productos.edit');
+        Route::patch('/productos/{producto}', [AdministradorDashboardController::class, 'updateProducto'])->name('productos.update');
+        Route::patch('/productos/{producto}/estado', [AdministradorDashboardController::class, 'estadoProducto'])->name('productos.estado');
+        Route::get('/categorias/{categoria}/editar', [AdministradorDashboardController::class, 'editarCategoria'])->name('categorias.edit');
+        Route::patch('/categorias/{categoria}', [AdministradorDashboardController::class, 'updateCategoria'])->name('categorias.update');
+        Route::patch('/categorias/{categoria}/estado', [AdministradorDashboardController::class, 'estadoCategoria'])->name('categorias.estado');
+        Route::get('/ingredientes/{ingrediente}/editar', [AdministradorDashboardController::class, 'editarIngrediente'])->name('ingredientes.edit');
+        Route::patch('/ingredientes/{ingrediente}', [AdministradorDashboardController::class, 'updateIngrediente'])->name('ingredientes.update');
+        Route::patch('/ingredientes/{ingrediente}/estado', [AdministradorDashboardController::class, 'estadoIngrediente'])->name('ingredientes.estado');
+
+        Route::get('/personal', [
+            AdministradorDashboardController::class,
+            'personal'
+        ])->name('personal');
     });
 
 // Rutas anteriores del cliente.
