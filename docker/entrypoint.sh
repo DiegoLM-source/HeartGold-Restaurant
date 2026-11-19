@@ -11,6 +11,16 @@ fi
 
 mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
+
+if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
+    if [ -n "${DB_DATABASE:-}" ]; then
+        touch "${DB_DATABASE}"
+    else
+        touch database/database.sqlite
+    fi
+fi
+
+php artisan migrate --force --no-interaction
 php artisan config:cache
 
 exec apache2-foreground
