@@ -37,8 +37,55 @@ class AdminOperationsAccessTest extends TestCase
             ->assertSee('Editar')
             ->assertSee('Archivar')
             ->assertSee('Coste promedio ponderado de compras')
+            ->assertSee('Métodos de pago')
+            ->assertSee('Efectivo')
+            ->assertSee('Transferencia bancaria')
+            ->assertSee(route('admin.metodos-pago.sugeridos'))
             ->assertSee(route('admin.productos.edit', self::PRODUCT_ID));
         $response->assertViewHas('costoPlatillos', fn (array $costos) => $costos[self::PRODUCT_ID] === 40.0);
+    }
+
+    public function test_admin_can_add_missing_payment_methods_and_reactivate_inactive_defaults(): void
+    {
+        $this->configureSupabase();
+        $existentes = [
+            ['id' => '00000000-0000-4000-8000-000000000201', 'nombre' => 'Efectivo', 'activo' => true],
+            ['id' => '00000000-0000-4000-8000-000000000202', 'nombre' => 'Tarjeta débito', 'activo' => false],
+        ];
+        $insertados = [];
+        $actualizados = [];
+
+        Http::fake(function (ClientRequest $request) use (&$existentes, &$insertados, &$actualizados) {
+            if ($request->method() === 'GET') {
+                return Http::response($existentes, 200);
+            }
+
+            if ($request->method() === 'POST') {
+                $metodo = array_merge($request->data(), [
+                    'id' => '00000000-0000-4000-8000-' . str_pad((string) (301 + count($insertados)), 12, '0', STR_PAD_LEFT),
+                ]);
+                $existentes[] = $metodo;
+                $insertados[] = $metodo;
+                return Http::response([$metodo], 201);
+            }
+
+            $actualizados[] = $request->data();
+            $existentes[1]['activo'] = true;
+            return Http::response([$existentes[1]], 200);
+        });
+
+        $response = $this->withSession($this->adminSession())
+            ->post(route('admin.metodos-pago.sugeridos'));
+
+        $response->assertRedirect(route('admin.dashboard'))
+            ->assertSessionHas('success', 'Métodos de pago listos: 3 agregados y 1 reactivados.');
+        $this->assertCount(3, $insertados);
+        $this->assertCount(1, $actualizados);
+
+        $response = $this->withSession($this->adminSession())
+            ->post(route('admin.metodos-pago.sugeridos'));
+        $response->assertSessionHas('success', 'Métodos de pago listos: 0 agregados y 0 reactivados.');
+        $this->assertCount(3, $insertados);
     }
 
     public function test_admin_can_open_the_product_editor(): void
@@ -85,6 +132,12 @@ class AdminOperationsAccessTest extends TestCase
             ]],
             'categorias' => [],
             'productos' => [$this->product()],
+            'metodos_pago' => [[
+                'id' => '00000000-0000-4000-8000-000000000103',
+                'nombre' => 'Efectivo',
+                'descripcion' => 'Pago recibido en efectivo.',
+                'activo' => true,
+            ]],
             'lotes_ingrediente' => [[
                 'ingrediente_id' => self::INGREDIENT_ID,
                 'cantidad_inicial' => 3,

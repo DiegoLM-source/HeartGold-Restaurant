@@ -155,6 +155,10 @@ Route::middleware('rol:admin')
             AdministradorDashboardController::class,
             'storeProducto'
         ])->middleware('throttle:10,1')->name('productos.store');
+        Route::post('/metodos-pago/sugeridos', [
+            AdministradorDashboardController::class,
+            'agregarMetodosPagoSugeridos'
+        ])->middleware('throttle:5,1')->name('metodos-pago.sugeridos');
 
         Route::get('/mesas', [AdministradorDashboardController::class, 'mesas'])->name('mesas');
         Route::post('/mesas', [AdministradorDashboardController::class, 'storeMesa'])->name('mesas.store');

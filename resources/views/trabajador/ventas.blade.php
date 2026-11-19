@@ -81,6 +81,9 @@
                             </label>
                             <button type="submit" class="worker-primary-link" @disabled(empty($metodosPago))>Registrar pago</button>
                         </form>
+                        @if (empty($metodosPago))
+                            <p class="worker-muted">No hay métodos de pago activos. Pídele al administrador que habilite los métodos sugeridos.</p>
+                        @endif
                         <p class="worker-payment-balance">Saldo pendiente: <strong>${{ number_format($venta['saldo'], 0, ',', '.') }}</strong></p>
                     @endif
                 @endif

@@ -13,11 +13,20 @@ use Illuminate\Validation\ValidationException;
 
 class DashboardController extends Controller
 {
+    private const METODOS_PAGO_SUGERIDOS = [
+        ['nombre' => 'Efectivo', 'descripcion' => 'Pago recibido en efectivo.'],
+        ['nombre' => 'Transferencia bancaria', 'descripcion' => 'Transferencia a una cuenta bancaria.'],
+        ['nombre' => 'Tarjeta débito', 'descripcion' => 'Pago con tarjeta débito.'],
+        ['nombre' => 'Tarjeta crédito', 'descripcion' => 'Pago con tarjeta crédito.'],
+        ['nombre' => 'Billetera digital / QR', 'descripcion' => 'Pago mediante billetera digital o código QR.'],
+    ];
+
     public function index()
     {
         $ingredientes = [];
         $categorias = [];
         $productos = [];
+        $metodosPago = [];
         $recetasProductos = [];
         $costosIngrediente = [];
         $costoPlatillos = [];
@@ -43,6 +52,21 @@ class DashboardController extends Controller
                 }
 
                 $$tabla = $respuesta->json() ?? [];
+            }
+
+            $respuestaMetodosPago = $this->supabase()->get($this->restUrl('metodos_pago'), [
+                'select' => 'id,nombre,descripcion,activo',
+                'order' => 'nombre.asc',
+                'limit' => '500',
+            ]);
+
+            if ($respuestaMetodosPago->successful()) {
+                $metodosPago = $respuestaMetodosPago->json() ?? [];
+            } else {
+                logger()->error('No se pudieron consultar los métodos de pago en administración', [
+                    'status' => $respuestaMetodosPago->status(),
+                ]);
+                $error = 'No fue posible cargar los métodos de pago. Comprueba los permisos de Supabase.';
             }
 
             $respuestaLotes = $this->supabase()->get($this->restUrl('lotes_ingrediente'), [
@@ -120,7 +144,88 @@ class DashboardController extends Controller
             $error = $exception->getMessage();
         }
 
-        return view('admin.dashboard', compact('ingredientes', 'categorias', 'productos', 'recetasProductos', 'costosIngrediente', 'costoPlatillos', 'costoDisponiblePlatillos', 'error'));
+        return view('admin.dashboard', compact('ingredientes', 'categorias', 'productos', 'metodosPago', 'recetasProductos', 'costosIngrediente', 'costoPlatillos', 'costoDisponiblePlatillos', 'error'));
+    }
+
+    public function agregarMetodosPagoSugeridos(Request $request)
+    {
+        try {
+            $respuesta = $this->supabase()->get($this->restUrl('metodos_pago'), [
+                'select' => 'id,nombre,activo',
+                'limit' => '500',
+            ]);
+
+            if (!$respuesta->successful()) {
+                logger()->error('No se pudieron consultar los métodos de pago existentes', [
+                    'status' => $respuesta->status(),
+                ]);
+                return back()->with('error', 'No se pudieron consultar los métodos de pago. Revisa los permisos RLS de Supabase.');
+            }
+
+            $existentes = $respuesta->json();
+            if (!is_array($existentes)) {
+                logger()->error('Supabase devolvió datos inválidos para los métodos de pago');
+                return back()->with('error', 'Supabase devolvió datos inválidos para los métodos de pago.');
+            }
+
+            $porNombre = [];
+            foreach ($existentes as $metodo) {
+                $nombre = mb_strtolower(trim($metodo['nombre'] ?? ''), 'UTF-8');
+                if ($nombre !== '') {
+                    $porNombre[$nombre] = $metodo;
+                }
+            }
+
+            $agregados = 0;
+            $reactivados = 0;
+            foreach (self::METODOS_PAGO_SUGERIDOS as $sugerido) {
+                $clave = mb_strtolower($sugerido['nombre'], 'UTF-8');
+                $actual = $porNombre[$clave] ?? null;
+
+                if ($actual && !empty($actual['activo'])) {
+                    continue;
+                }
+
+                if ($actual) {
+                    if (empty($actual['id'])) {
+                        logger()->error('No se pudo reactivar un método de pago sin identificador', ['nombre' => $sugerido['nombre']]);
+                        return back()->with('error', 'No se pudo reactivar "' . $sugerido['nombre'] . "'. Revisa el identificador del registro en Supabase.");
+                    }
+
+                    $actualizado = $this->supabase()
+                        ->withHeaders(['Prefer' => 'return=representation'])
+                        ->patch($this->restUrl('metodos_pago') . '?id=eq.' . urlencode($actual['id']), [
+                            'activo' => true,
+                        ]);
+                    if (!$actualizado->successful()) {
+                        return $this->errorPostgrest($request, $actualizado, 'metodos_pago');
+                    }
+                    if (empty($actualizado->json())) {
+                        return back()->with('error', 'Supabase no permitió reactivar "' . $sugerido['nombre'] . '".');
+                    }
+                    $reactivados++;
+                    continue;
+                }
+
+                $creado = $this->supabase()
+                    ->withHeaders(['Prefer' => 'return=representation'])
+                    ->post($this->restUrl('metodos_pago'), $sugerido + ['activo' => true]);
+                if (!$creado->successful()) {
+                    return $this->errorPostgrest($request, $creado, 'metodos_pago');
+                }
+                $agregados++;
+            }
+
+            return redirect()->route('admin.dashboard')->with(
+                'success',
+                'Métodos de pago listos: ' . $agregados . ' agregados y ' . $reactivados . ' reactivados.'
+            );
+        } catch (ConnectionException $exception) {
+            report($exception);
+            return back()->with('error', 'No se pudo conectar con Supabase. Inténtalo de nuevo.');
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
     }
 
     public function reportes(Request $request)

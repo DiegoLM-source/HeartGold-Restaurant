@@ -21,6 +21,7 @@
                 <a href="{{ route('admin.dashboard') }}#platillos" class="admin-nav-link"><span>✦</span> Platillos</a>
                 <a href="{{ route('admin.dashboard') }}#ingredientes" class="admin-nav-link"><span>◌</span> Ingredientes</a>
                 <a href="{{ route('admin.dashboard') }}#categorias" class="admin-nav-link"><span>▦</span> Categorías</a>
+                <a href="{{ route('admin.dashboard') }}#metodos-pago" class="admin-nav-link"><span>$</span> Métodos de pago</a>
                 <a href="{{ route('admin.reportes') }}" class="admin-nav-link {{ request()->routeIs('admin.reportes*') ? 'active' : '' }}"><span>▤</span> Reportes</a>
                 <a href="{{ route('admin.mesas') }}" class="admin-nav-link {{ request()->routeIs('admin.mesas*') ? 'active' : '' }}"><span>▦</span> Mesas</a>
                 <a href="{{ route('admin.personal') }}" class="admin-nav-link {{ request()->routeIs('admin.personal') ? 'active' : '' }}"><span>♙</span> Personal</a>

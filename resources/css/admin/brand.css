@@ -375,6 +375,19 @@
     color: #806f72;
 }
 
+.admin-payment-suggestions {
+    display: grid;
+    gap: 7px;
+    margin: -2px 0 2px;
+    padding-left: 18px;
+    color: #6d5559;
+    font-size: 11px;
+}
+
+.admin-payment-suggestions li::marker {
+    color: #a64b5f;
+}
+
 .admin-topbar-logout {
     border-color: #eadfe1;
     background: #fffefa;

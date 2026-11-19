@@ -180,5 +180,40 @@
             @endforelse
         </div>
     </section>
+
+    <section class="admin-section-heading" id="metodos-pago">
+        <div><span class="admin-eyebrow">CAJA</span><h2>Métodos de pago</h2><p>Elige qué medios pueden usar los trabajadores al registrar pagos.</p></div>
+        <span class="admin-section-count">{{ count($metodosPago) }} registrados</span>
+    </section>
+    <section class="admin-management-grid">
+        <div class="admin-form-card">
+            <div class="admin-card-title"><span class="admin-card-symbol">↗</span><div><h3>Métodos sugeridos</h3><p>Se agregan los faltantes y se reactivan los archivados.</p></div></div>
+            <ul class="admin-payment-suggestions">
+                <li>Efectivo</li>
+                <li>Transferencia bancaria</li>
+                <li>Tarjeta débito y crédito</li>
+                <li>Billetera digital / QR</li>
+            </ul>
+            <form method="POST" action="{{ route('admin.metodos-pago.sugeridos') }}">
+                @csrf
+                <button class="admin-submit" type="submit">Agregar métodos sugeridos <span>→</span></button>
+            </form>
+            <p class="admin-form-footnote">Son etiquetas para registrar y clasificar pagos; no conectan pasarelas ni procesan transacciones automáticamente.</p>
+        </div>
+        <div class="admin-list-card">
+            <div class="admin-list-heading"><div><h3>Medios disponibles</h3><p>Los activos aparecen en el formulario de cobro.</p></div><span>{{ count($metodosPago) }}</span></div>
+            <div class="admin-record-list">
+                @forelse ($metodosPago as $metodo)
+                    <article class="admin-record">
+                        <span class="admin-record-thumb">$</span>
+                        <div class="admin-record-copy"><strong>{{ $metodo['nombre'] }}</strong><small>{{ $metodo['descripcion'] ?: 'Sin descripción' }}</small></div>
+                        <span class="admin-status {{ !empty($metodo['activo']) ? 'status-active' : 'status-inactive' }}">{{ !empty($metodo['activo']) ? 'Activo' : 'Inactivo' }}</span>
+                    </article>
+                @empty
+                    <div class="admin-empty"><strong>Aún no hay métodos de pago.</strong><small>Agrega los sugeridos para habilitarlos en caja.</small></div>
+                @endforelse
+            </div>
+        </div>
+    </section>
     <footer class="admin-footer">La Mesa <span>·</span> Administración del restaurante</footer>
 @endsection
