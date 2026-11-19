@@ -2,7 +2,6 @@
 set -eu
 
 PORT="${PORT:-10000}"
-sed -i "s/10000/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
 
 if [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
     export APP_URL="${RENDER_EXTERNAL_URL}"
@@ -21,6 +20,8 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
 fi
 
 php artisan migrate --force --no-interaction
-php artisan config:cache
+php artisan optimize:clear
+php artisan view:cache
+php artisan route:cache
 
-exec apache2-foreground
+exec php artisan serve --host=0.0.0.0 --port="${PORT}"
