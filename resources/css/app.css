@@ -29,33 +29,3 @@
 @import './cliente/mesa.css';
 @import './cliente/mesa-qr.css';
 @import './trabajador/solicitudes-mesa.css';
-
-.login-success {
-    background: #e8f5e9;
-    color: #276738;
-    border: 1px solid #b7dfbd;
-    padding: 12px 14px;
-    border-radius: 9px;
-    margin-bottom: 18px;
-    font-size: 14px;
-}
-
-.register-login-link {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 5px;
-    margin-top: 22px;
-    font-size: 14px;
-    color: #66565a;
-}
-
-.register-login-link a {
-    color: #641d32;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.register-login-link a:hover {
-    text-decoration: underline;
-}
